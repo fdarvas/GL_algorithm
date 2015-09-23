@@ -8,8 +8,7 @@ script to demonstrate the application of my implementation of the Gregory-Laredo
 """
 
 from simulate_arrival_times import simulate_arrival_times
-from compute_bin import compute_bin
-from GL_algorithm import compute_GL
+from GL_algorithm import compute_GL,compute_bin
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -46,7 +45,7 @@ if __name__ == '__main__':
     ax.set_title('phase bin histogramm for periodic rate process')
     
     # test GL algorithm for constant rate process
-    O_period1,p_period1,m_opt1,S1,w1,w_peak1,w_conf1=compute_GL(T1,parallel=psx)
+    O_period1,p_period1,m_opt1,S1,w1,w_peak1,w_mean1,w_conf1=compute_GL(T1,parallel=psx)
     
     fig, ax = plt.subplots()
     ax.plot(w1,S1)
@@ -54,17 +53,17 @@ if __name__ == '__main__':
     ax.set_xlabel('f [rad/s]')
     ax.set_title('spectrum for constant rate process')
     
-    print ('Likelihood of periodic process =%3.2f %% most likely frequency %e 95 %% confidence interval = [%e  %e]\n') % (p_period1*100,w_peak1,w_conf1[0],w_conf1[1])
+    print ('Likelihood of periodic process =%3.2f %% most likely frequency %e mean frequency %e 95 %% confidence interval = [%e  %e]\n') % (p_period1*100,w_peak1,w_mean1,w_conf1[0],w_conf1[1])
     
     
     
-    O_period2,p_period2,m_opt2,S2,w2,w_peak2,w_conf2=compute_GL(T2,parallel=psx)
+    O_period2,p_period2,m_opt2,S2,w2,w_peak2,w_mean2,w_conf2=compute_GL(T2,parallel=psx)
     
     fig, ax = plt.subplots()
     ax.plot(w2,S2)
     ax.set_ylabel('probability')
     ax.set_xlabel('f [rad/s]')
     ax.set_title('spectrum for periodic rate process')
-    print ('Likelihood of periodic process =%3.2f %% most likely frequency %e 95 %% confidence interval = [%e %e]\n') % (p_period2*100,w_peak2,w_conf2[0],w_conf2[1])
+    print ('Likelihood of periodic process =%3.2f %% most likely frequency %e mean frequency %e 95 %% confidence interval = [%e %e]\n') % (p_period2*100,w_peak2,w_mean2,w_conf2[0],w_conf2[1])
     plt.show()
 

@@ -11,8 +11,7 @@ http://astrostatistics.psu.edu/datasets/Chandra_flares.html
 
 """
 
-from compute_bin import compute_bin
-from GL_algorithm import compute_GL
+from GL_algorithm import compute_GL,compute_bin
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -47,12 +46,12 @@ if __name__ == '__main__':
         T=import_data(fullfile) # get astro-data from file
 
         t0=time.time() # benchmark performance
-        O_period,p_period,m_opt,S,w,w_peak,w_conf=compute_GL(T,parallel=px) # run GL,  parallel execution
+        O_period,p_period,m_opt,S,w,w_peak,w_mean,w_conf=compute_GL(T,parallel=px) # run GL,  parallel execution
         t1=time.time()
         print "total time used = %f with parallel execution\n" % (t1-t0)
     
         n=compute_bin(T,m=m_opt,w=w_peak,p=0) # compute resulting bin histogram
-        print ('File:%s - Likelihood of periodic process =%3.2f %% most likely frequency %e 95 %% confidence interval = [%e %e]\n') % (fname,p_period*100,w_peak,w_conf[0],w_conf[1])
+        print ('File:%s - Likelihood of periodic process =%3.2f %% most likely frequency %e mean frequency %e 95 %% confidence interval = [%e %e]\n') % (fname,p_period*100,w_peak,w_mean,w_conf[0],w_conf[1])
             
     
     
@@ -67,7 +66,7 @@ if __name__ == '__main__':
         
         T=import_data(fullfile) # get astro-data from file
         t0=time.time() # benchmark performance
-        O_period,p_period,m_opt,S,w,w_peak,w_conf=compute_GL(T,parallel=px) 
+        O_period,p_period,m_opt,S,w,w_peak,w_mean,w_conf=compute_GL(T,parallel=px) 
         t1=time.time()
         print "total time used = %f with serial execution\n" % (t1-t0)
         n=compute_bin(T,m=m_opt,w=w_peak,p=0) # compute resulting bin histogram
@@ -86,7 +85,7 @@ if __name__ == '__main__':
         ax.set_ylabel('probability')
         ax.set_xlabel('f [rad/s]')
         ax.set_title('phase spectrum for periodic rate process - '+fname)
-        print ('File:%s - Likelihood of periodic process =%3.2f %% most likely frequency %e 95 %% confidence interval = [%e %e]\n') % (fname,p_period*100,w_peak,w_conf[0],w_conf[1])
+        print ('File:%s - Likelihood of periodic process =%3.2f %% most likely frequency %e mean frequency %e 95 %% confidence interval = [%e %e]\n') % (fname,p_period*100,w_peak,w_mean,w_conf[0],w_conf[1])
             
     
     plt.show()

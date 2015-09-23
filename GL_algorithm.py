@@ -38,9 +38,16 @@ w_conf   - 95% confidence interval of w_peak
 """
 
 import numpy as np 
-from compute_bin import compute_bin # need compute bin function to compute GL
-import multiprocessing as mp # multiprocessing on linux machines
+import multiprocessing as mp 
 import functools
+
+def compute_bin(Tlist,m,w,p):
+    n=np.zeros(m,'int')
+    j=np.floor(m*np.mod(w*Tlist+p,2*np.pi)/(2*np.pi))
+    j.astype(int)
+    for u in range(0,m):
+        n[u]=np.size(np.extract(j==u,j))
+    return n
 
 def compute_factor(N,m,v): 
     # compute m^N *(N+m-1) over N /(2pi v)
@@ -100,17 +107,22 @@ def compute_GL(Tlist,m_max=12,w_range=None,ni=10,parallel=False):
     S=None
     w=None
     w_peak=None
+    w_mean=None
     w_conf=None
-    N=float(np.size(Tlist)) # need float value to avoud int/int
+    N=float(np.size(Tlist)) # need float value to avoid int/int
     if N>0:
         # compute GL algorithm
         v=m_max-1
         T=float(np.max(Tlist)) # duration of the observation
         if w_range is None: # use default frequencies
             w_hi=np.pi*N/T # max default frequency
-            w_lo=20*np.pi/T # min default frequency
+            
+            w_lo=np.minimum(20,N/10)*np.pi/T # min default frequency
             dw=np.pi/T # step size
             w=np.arange(w_lo,w_hi,dw)
+            if np.size(w)<2:
+                print "error "
+                raise ValueError('bad arrival time list')
         else: # use user supplied frequency vector
             w=w_range 
             w_hi=np.max(w_range)
@@ -144,13 +156,14 @@ def compute_GL(Tlist,m_max=12,w_range=None,ni=10,parallel=False):
         cdf=np.cumsum(S*dw)
         wr=np.extract(np.logical_and(cdf>.025, cdf<.975),w)
         w_peak=w[np.argmax(S)]
+        w_mean=np.trapz(S*w,w)
         if np.size(wr)>0:
             w_conf=[np.min(wr),np.max(wr)]
         else:
             w_conf=[w_peak,w_peak]
-        return O_period,p_period,m_opt,S,w,w_peak,w_conf
+        return O_period,p_period,m_opt,S,w,w_peak,w_mean,w_conf
     else:
         # throw an error
         print ("No valid arrival time array provided!\n")
-        return
+        return O_period,p_period,m_opt,S,w,w_peak,w_mean,w_conf
         
