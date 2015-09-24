@@ -118,7 +118,7 @@ def compute_GL(Tlist,m_max=12,w_range=None,ni=10,parallel=False):
             w_hi=np.pi*N/T # max default frequency
             
             w_lo=np.minimum(20,N/10)*np.pi/T # min default frequency
-            dw=np.pi/T # step size
+            dw=np.pi/T/10 # step size
             w=np.arange(w_lo,w_hi,dw)
             if np.size(w)<2:
                 print "error "
@@ -152,8 +152,9 @@ def compute_GL(Tlist,m_max=12,w_range=None,ni=10,parallel=False):
         S=S/C # normalized probability
         O_period=np.sum(O1m) # integrated odds ratio
         p_period=O_period/(1+O_period) # likelihood of periodic event
-        dw=w[1]-w[0]
-        cdf=np.cumsum(S*dw)
+        cdf=np.array(S)
+        for i in range(0,np.size(S)):
+            cdf[i]=np.trapz(S[0:i],w[0:i])
         wr=np.extract(np.logical_and(cdf>.025, cdf<.975),w)
         w_peak=w[np.argmax(S)]
         w_mean=np.trapz(S*w,w)
