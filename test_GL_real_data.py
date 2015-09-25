@@ -81,8 +81,8 @@ if __name__ == '__main__':
         
         #plot the probability spectrum
         fig, ax = plt.subplots()
-        ax.plot(w,S)
-        ax.set_ylabel('probability')
+        ax.plot(w,np.log(S))
+        ax.set_ylabel('log probability')
         ax.set_xlabel('f [rad/s]')
         ax.set_title('phase spectrum for periodic rate process - '+fname)
         print ('File:%s - Likelihood of periodic process =%3.2f %% most likely frequency %e mean frequency %e 95 %% confidence interval = [%e %e]\n') % (fname,p_period*100,w_peak,w_mean,w_conf[0],w_conf[1])

@@ -58,8 +58,15 @@ def compute_factor(N,m,v):
     f3=np.sum(np.log(np.arange(1,m+1))) # log of m!
     f=f1+f3-f2-np.log(2*np.pi*v)
     return f
-    
-def compute_W_scaled(Tlist,m,w,phase,factor):
+   
+def precompute_binmult(N):
+	# precompute all potential bin factorials
+	fbin=np.zeros(int(N)+1)
+	for i in range(2,int(N+1)): # n=0 -> define log(n)=0, n=1, log(n)=0, so no need to compute n=0,1
+		fbin[i]=fbin[i-1]+np.log(i)
+	return fbin
+	   
+def compute_W_scaled(Tlist,m,w,phase,factor,fbin):
     # compute the scaled multiplicity 1/Wm(w,phase) (see eqn. 5.25)
     # note that for large arrival time numbers the multiplicity becomes
     # excessively large. Since W_m(phase,w) is never needed explicitly,
@@ -68,33 +75,34 @@ def compute_W_scaled(Tlist,m,w,phase,factor):
     n=compute_bin(Tlist,m,w,phase) # find bin histogram for a given bin number m, frequency w and phase 
     f=0    
     for i in range(0,m):
-        f=f+np.sum(np.log(np.arange(2,n[i]+1)))
+        #f=f+np.sum(np.log(np.arange(2,n[i]+1)))
+        f=f+fbin[n[i]]
     y=np.exp(f+factor)
     return y
 
-def compute_Om1(w,Tlist,m,factor,ni):
+def compute_Om1(w,Tlist,m,factor,fbin,ni):
     #compute  specific odds-ratios (eqn. 5.25)
     p=np.arange(0,ni)/float(ni)*2*np.pi/m # intgration range, only integrate over a single bin, as values of the integral repeat over bins       
     y=np.zeros(np.size(p),'float') # array to hold values of W_scaled over the integration range
     for i in range(0,np.size(y)):
-        y[i]=compute_W_scaled(Tlist,m,w,p[i],factor)
+        y[i]=compute_W_scaled(Tlist,m,w,p[i],factor,fbin)
     return np.trapz(y,p)*m # return intregrated W_Scaled
 
 
-def compute_Om1wPar(Tlist,m_max,w,fa,ni): # compute odds-ratios for bins and frequencies
+def compute_Om1wPar(Tlist,m_max,w,fa,fbin,ni): # compute odds-ratios for bins and frequencies
 	# parallel version 
     Om1w=np.zeros((m_max,np.size(w)),'float') # odds ratio matrix
     pool=mp.Pool() # use all workers
     
     for m in range(0,m_max):
-		Om1w[m,:]=pool.map(functools.partial(compute_Om1,Tlist=Tlist,m=(m+1),factor=fa[m],ni=ni),w)
+		Om1w[m,:]=pool.map(functools.partial(compute_Om1,Tlist=Tlist,m=(m+1),factor=fa[m],fbin=fbin,ni=ni),w)
     return Om1w
     
-def compute_Om1w(Tlist,m_max,w,fa,ni): # compute odds-ratios for bins and frequencies
+def compute_Om1w(Tlist,m_max,w,fa,fbin,ni): # compute odds-ratios for bins and frequencies
     Om1w=np.zeros((m_max,np.size(w)),'float') # odds ratio matrix
     for m in range(0,m_max):
         for wi in range(0,np.size(w)):
-            Om1w[m,wi]=compute_Om1(w[wi],Tlist,m+1,fa[m],ni)
+            Om1w[m,wi]=compute_Om1(w[wi],Tlist,m+1,fa[m],fbin,ni)
     return Om1w
     
                     
@@ -112,6 +120,7 @@ def compute_GL(Tlist,m_max=12,w_range=None,ni=10,parallel=False):
     N=float(np.size(Tlist)) # need float value to avoid int/int
     if N>0:
         # compute GL algorithm
+        fbin=precompute_binmult(N)
         v=m_max-1
         T=float(np.max(Tlist)) # duration of the observation
         if w_range is None: # use default frequencies
@@ -136,9 +145,9 @@ def compute_GL(Tlist,m_max=12,w_range=None,ni=10,parallel=False):
         for m in range(0,m_max): # precompute factors for each m
             fa[m]=compute_factor(N,m+1,v)    
         if parallel:    
-			Om1w=compute_Om1wPar(Tlist,m_max,w,fa,ni)
+			Om1w=compute_Om1wPar(Tlist,m_max,w,fa,fbin,ni)
         else:
-            Om1w=compute_Om1w(Tlist,m_max,w,fa,ni)
+            Om1w=compute_Om1w(Tlist,m_max,w,fa,fbin,ni)
             
         pw=1/w/np.log(w_hi/w_lo)
         O1m=np.zeros(m_max)
